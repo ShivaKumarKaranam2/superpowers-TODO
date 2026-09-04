@@ -33,4 +33,10 @@ public class TaskController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/move")
+    public TaskResponse move(@PathVariable Long id,
+                              @jakarta.validation.Valid @RequestBody com.todoapp.backend.task.dto.MoveTaskRequest request) {
+        return service.move(id, request.getTargetColumnId(), request.getTargetPosition());
+    }
 }

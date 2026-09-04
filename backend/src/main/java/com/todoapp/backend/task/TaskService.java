@@ -89,6 +89,45 @@ public class TaskService {
                 .findFirst();
     }
 
+    public TaskResponse move(Long id, Long targetColumnId, int targetPosition) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Task " + id + " not found"));
+        WorkflowColumn targetColumn = columnRepository.findById(targetColumnId)
+                .orElseThrow(() -> new NotFoundException("Column " + targetColumnId + " not found"));
+
+        Long sourceColumnId = task.getColumn().getId();
+        boolean sameColumn = sourceColumnId.equals(targetColumnId);
+
+        if (sameColumn) {
+            List<Task> ordered = taskRepository.findByColumnIdOrderByPositionAsc(sourceColumnId);
+            ordered.removeIf(t -> t.getId().equals(task.getId()));
+            int insertAt = Math.max(0, Math.min(targetPosition, ordered.size()));
+            ordered.add(insertAt, task);
+            for (int i = 0; i < ordered.size(); i++) {
+                ordered.get(i).setPosition(i);
+            }
+            taskRepository.saveAll(ordered);
+        } else {
+            List<Task> sourceOrdered = taskRepository.findByColumnIdOrderByPositionAsc(sourceColumnId);
+            sourceOrdered.removeIf(t -> t.getId().equals(task.getId()));
+            for (int i = 0; i < sourceOrdered.size(); i++) {
+                sourceOrdered.get(i).setPosition(i);
+            }
+            taskRepository.saveAll(sourceOrdered);
+
+            List<Task> targetOrdered = taskRepository.findByColumnIdOrderByPositionAsc(targetColumnId);
+            task.setColumn(targetColumn);
+            int insertAt = Math.max(0, Math.min(targetPosition, targetOrdered.size()));
+            targetOrdered.add(insertAt, task);
+            for (int i = 0; i < targetOrdered.size(); i++) {
+                targetOrdered.get(i).setPosition(i);
+            }
+            taskRepository.saveAll(targetOrdered);
+        }
+
+        return new TaskResponse(task);
+    }
+
     public void delete(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task " + id + " not found"));
