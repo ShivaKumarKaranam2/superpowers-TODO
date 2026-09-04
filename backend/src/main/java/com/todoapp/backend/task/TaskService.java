@@ -68,8 +68,8 @@ public class TaskService {
 
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
-        task.setPriority(request.getPriority() != null ? request.getPriority() : task.getPriority());
-        task.setTags(request.getTags() != null ? new HashSet<>(request.getTags()) : task.getTags());
+        task.setPriority(request.getPriority());
+        task.setTags(new HashSet<>(request.getTags()));
         task.setStartTime(request.getStartTime());
         task.setEndTime(request.getEndTime());
         task.touchUpdatedAt();

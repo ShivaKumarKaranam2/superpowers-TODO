@@ -2,6 +2,7 @@ package com.todoapp.backend.task.dto;
 
 import com.todoapp.backend.task.Priority;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
 import java.util.Set;
@@ -11,7 +12,11 @@ public class UpdateTaskRequest {
     private String title;
 
     private String description;
+
+    @NotNull(message = "priority is required")
     private Priority priority;
+
+    @NotNull(message = "tags is required")
     private Set<String> tags;
     private Instant startTime;
     private Instant endTime;

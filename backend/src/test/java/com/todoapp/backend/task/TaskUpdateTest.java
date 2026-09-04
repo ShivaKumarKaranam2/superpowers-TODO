@@ -44,7 +44,7 @@ class TaskUpdateTest {
 
         mockMvc.perform(patch("/api/tasks/{id}", task.getId())
                         .contentType("application/json")
-                        .content("{\"title\":\"Standup\",\"tags\":[],\"startTime\":\"2026-09-05T09:00:00Z\",\"endTime\":\"2026-09-05T10:00:00Z\"}"))
+                        .content("{\"title\":\"Standup\",\"priority\":\"MEDIUM\",\"tags\":[],\"startTime\":\"2026-09-05T09:00:00Z\",\"endTime\":\"2026-09-05T10:00:00Z\"}"))
                 .andExpect(status().isOk());
     }
 
@@ -59,7 +59,7 @@ class TaskUpdateTest {
 
         mockMvc.perform(patch("/api/tasks/{id}", movable.getId())
                         .contentType("application/json")
-                        .content("{\"title\":\"Free task\",\"tags\":[],\"startTime\":\"2026-09-05T09:30:00Z\",\"endTime\":\"2026-09-05T10:30:00Z\"}"))
+                        .content("{\"title\":\"Free task\",\"priority\":\"MEDIUM\",\"tags\":[],\"startTime\":\"2026-09-05T09:30:00Z\",\"endTime\":\"2026-09-05T10:30:00Z\"}"))
                 .andExpect(status().isConflict());
     }
 
@@ -67,7 +67,18 @@ class TaskUpdateTest {
     void returns404ForMissingTask() throws Exception {
         mockMvc.perform(patch("/api/tasks/{id}", 9999L)
                         .contentType("application/json")
-                        .content("{\"title\":\"X\",\"tags\":[]}"))
+                        .content("{\"title\":\"X\",\"priority\":\"MEDIUM\",\"tags\":[]}"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void rejectsUpdateMissingPriority() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        Task task = taskRepository.save(new Task(column, 0, "Title"));
+
+        mockMvc.perform(patch("/api/tasks/{id}", task.getId())
+                        .contentType("application/json")
+                        .content("{\"title\":\"Title\",\"tags\":[]}"))
+                .andExpect(status().isBadRequest());
     }
 }
