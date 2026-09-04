@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -86,5 +87,18 @@ public class TaskService {
                 .filter(existing -> existing.getStartTime().isBefore(endTime)
                         && startTime.isBefore(existing.getEndTime()))
                 .findFirst();
+    }
+
+    public void delete(Long id) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Task " + id + " not found"));
+        Long columnId = task.getColumn().getId();
+        taskRepository.delete(task);
+
+        List<Task> remaining = taskRepository.findByColumnIdOrderByPositionAsc(columnId);
+        for (int i = 0; i < remaining.size(); i++) {
+            remaining.get(i).setPosition(i);
+        }
+        taskRepository.saveAll(remaining);
     }
 }

@@ -27,4 +27,10 @@ public class TaskController {
                                 @jakarta.validation.Valid @RequestBody com.todoapp.backend.task.dto.UpdateTaskRequest request) {
         return service.update(id, request);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
