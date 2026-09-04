@@ -175,4 +175,21 @@ describe('BoardComponent edit wiring', () => {
     (columnDebugEl!.componentInstance as ColumnComponent).editTask.emit(taskA);
     expect(fixture.componentInstance.editingTask).toBe(taskA);
   });
+
+  it('opens the create-task form for a column when addTask is emitted, clearing any in-progress edit', () => {
+    fixture.componentInstance.editingTask = taskA;
+
+    fixture.componentInstance.onAddTaskClicked(1);
+
+    expect(fixture.componentInstance.activeColumnIdForNewTask).toBe(1);
+    expect(fixture.componentInstance.editingTask).toBeNull();
+  });
+
+  it('wires the column addTask output to onAddTaskClicked', () => {
+    fixture.detectChanges();
+    const columnDebugEl = fixture.debugElement.query(By.directive(ColumnComponent));
+    expect(columnDebugEl).not.toBeNull();
+    (columnDebugEl!.componentInstance as ColumnComponent).addTask.emit(1);
+    expect(fixture.componentInstance.activeColumnIdForNewTask).toBe(1);
+  });
 });

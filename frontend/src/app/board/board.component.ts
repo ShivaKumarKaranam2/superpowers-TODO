@@ -14,7 +14,8 @@ import { TaskFormComponent } from '../task-form/task-form.component';
     <div class="board" cdkDropListGroup>
       <app-column *ngFor="let column of board?.columns" [column]="column"
                    (rename)="onRenameColumn($event)" (delete)="onDeleteColumn($event)"
-                   (drop)="onColumnDropEvent($event)" (editTask)="onEditTask($event)"></app-column>
+                   (drop)="onColumnDropEvent($event)" (editTask)="onEditTask($event)"
+                   (addTask)="onAddTaskClicked($event)"></app-column>
       <input #newColumnName placeholder="New column name" (keyup.enter)="addColumn(newColumnName.value); newColumnName.value = ''" />
       <app-task-form *ngIf="activeColumnIdForNewTask !== null || editingTask !== null"
                       [columnId]="(editingTask?.columnId ?? activeColumnIdForNewTask)!"
@@ -60,6 +61,11 @@ export class BoardComponent implements OnInit {
 
   onEditTask(task: Task): void {
     this.editingTask = task;
+  }
+
+  onAddTaskClicked(columnId: number): void {
+    this.activeColumnIdForNewTask = columnId;
+    this.editingTask = null;
   }
 
   onCancelForm(): void {

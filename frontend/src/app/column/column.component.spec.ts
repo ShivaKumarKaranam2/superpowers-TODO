@@ -32,4 +32,16 @@ describe('ColumnComponent', () => {
 
     expect(emitted).toEqual([1]);
   });
+
+  it('emits addTask with the column id when the add-task button is clicked', () => {
+    const emitted: number[] = [];
+    fixture.componentInstance.addTask.subscribe((id: number) => emitted.push(id));
+
+    const buttons: HTMLButtonElement[] = fixture.nativeElement.querySelectorAll('button');
+    const addTaskButton = Array.from(buttons).find((b) => b.textContent?.includes('Add task'));
+    expect(addTaskButton).toBeDefined();
+    addTaskButton!.click();
+
+    expect(emitted).toEqual([1]);
+  });
 });

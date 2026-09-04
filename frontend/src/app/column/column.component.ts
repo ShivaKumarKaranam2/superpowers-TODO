@@ -14,6 +14,7 @@ import { TaskCardComponent } from '../task-card/task-card.component';
       <div *ngIf="!renaming" (dblclick)="startRenaming()"><h3>{{ column.name }}</h3></div>
       <input *ngIf="renaming" [(ngModel)]="renameDraft" (blur)="confirmRename()" (keyup.enter)="confirmRename()" />
       <button type="button" (click)="requestDelete()">Delete column</button>
+      <button type="button" (click)="addTask.emit(column.id)">+ Add task</button>
       <div cdkDropList [id]="'column-' + column.id" [cdkDropListData]="column.tasks"
            (cdkDropListDropped)="drop.emit($event)" class="task-list">
         <app-task-card *ngFor="let task of column.tasks" cdkDrag [cdkDragData]="task" [task]="task"
@@ -28,6 +29,7 @@ export class ColumnComponent {
   @Output() delete = new EventEmitter<number>();
   @Output() drop = new EventEmitter<CdkDragDrop<Task[]>>();
   @Output() editTask = new EventEmitter<Task>();
+  @Output() addTask = new EventEmitter<number>();
 
   renaming = false;
   renameDraft = '';
