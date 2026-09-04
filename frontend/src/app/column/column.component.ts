@@ -22,6 +22,10 @@ import { TaskCardComponent } from '../task-card/task-card.component';
       </div>
     </div>
   `,
+  styles: [`
+    .column { min-width: 260px; max-width: 260px; background: #f4f5f7; padding: 12px; border-radius: 8px; }
+    .task-list { min-height: 40px; }
+  `],
 })
 export class ColumnComponent {
   @Input({ required: true }) column!: ColumnWithTasks;

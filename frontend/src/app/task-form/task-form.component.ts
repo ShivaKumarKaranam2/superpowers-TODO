@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CreateTaskRequest, Priority, Task, UpdateTaskRequest } from '../models/models';
@@ -44,8 +44,13 @@ export function findClientSideOverlap(
       <div class="conflict" *ngIf="conflict || serverConflict">Overlaps with "{{ (conflict || serverConflict)?.title }}"</div>
       <button type="submit">Save</button>
       <button type="button" (click)="cancel.emit()">Cancel</button>
+      <button type="button" *ngIf="editingTask" (click)="requestDelete()">Delete task</button>
     </form>
   `,
+  styles: [`
+    .error { color: #c0392b; font-size: 0.85em; }
+    .conflict { background: #fdecea; color: #c0392b; padding: 6px 10px; border-radius: 4px; margin-top: 4px; }
+  `],
 })
 export class TaskFormComponent {
   @Input({ required: true }) columnId!: number;
@@ -54,6 +59,7 @@ export class TaskFormComponent {
   @Input() serverConflict: Task | { title: string } | null = null;
   @Output() save = new EventEmitter<{ request: CreateTaskRequest | UpdateTaskRequest; taskId: number | null }>();
   @Output() cancel = new EventEmitter<void>();
+  @Output() deleteTask = new EventEmitter<number>();
 
   title = '';
   description = '';
@@ -64,7 +70,10 @@ export class TaskFormComponent {
   errors: string[] = [];
   conflict: Task | null = null;
 
-  ngOnChanges(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['editingTask']) {
+      return;
+    }
     if (this.editingTask) {
       this.title = this.editingTask.title;
       this.description = this.editingTask.description ?? '';
@@ -79,6 +88,12 @@ export class TaskFormComponent {
       this.tagsText = '';
       this.startTime = '';
       this.endTime = '';
+    }
+  }
+
+  requestDelete(): void {
+    if (this.editingTask) {
+      this.deleteTask.emit(this.editingTask.id);
     }
   }
 

@@ -2,6 +2,7 @@ package com.todoapp.backend.column;
 
 import com.todoapp.backend.column.dto.ColumnResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class WorkflowColumnService {
                 .toList();
     }
 
+    @Transactional
     public ColumnResponse update(Long id, String name, Integer position) {
         WorkflowColumn column = repository.findById(id)
                 .orElseThrow(() -> new com.todoapp.backend.common.exception.NotFoundException(
@@ -54,13 +56,13 @@ public class WorkflowColumnService {
         repository.saveAll(ordered);
     }
 
+    @Transactional
     public void delete(Long id) {
         WorkflowColumn column = repository.findById(id)
                 .orElseThrow(() -> new com.todoapp.backend.common.exception.NotFoundException(
                         "Column " + id + " not found"));
         if (hasAnyTasks(id)) {
-            throw new com.todoapp.backend.common.exception.ValidationException(
-                    "Column is not empty", java.util.Map.of("id", "column has tasks and cannot be deleted"));
+            throw new com.todoapp.backend.common.exception.ConflictException("Column is not empty");
         }
         repository.delete(column);
     }

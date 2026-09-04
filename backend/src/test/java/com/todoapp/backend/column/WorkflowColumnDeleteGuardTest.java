@@ -27,6 +27,6 @@ class WorkflowColumnDeleteGuardTest {
         taskRepository.save(new Task(column, 0, "Something"));
 
         mockMvc.perform(delete("/api/columns/{id}", column.getId()))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
     }
 }

@@ -30,4 +30,18 @@ public class ApiExceptionHandler {
                 new com.todoapp.backend.common.dto.OverlapErrorResponse(
                         new com.todoapp.backend.common.dto.ConflictingTaskDto(ex.getConflictingTask())));
     }
+
+    @ExceptionHandler(com.todoapp.backend.common.exception.ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(com.todoapp.backend.common.exception.ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationErrors(org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        java.util.Map<String, String> fields = new java.util.HashMap<>();
+        for (org.springframework.validation.FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            fields.put(fieldError.getField(), fieldError.getDefaultMessage());
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Validation failed", fields));
+    }
 }

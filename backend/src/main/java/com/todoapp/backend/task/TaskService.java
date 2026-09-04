@@ -7,6 +7,7 @@ import com.todoapp.backend.common.exception.ValidationException;
 import com.todoapp.backend.task.dto.CreateTaskRequest;
 import com.todoapp.backend.task.dto.TaskResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -25,6 +26,7 @@ public class TaskService {
         this.columnRepository = columnRepository;
     }
 
+    @Transactional
     public TaskResponse create(CreateTaskRequest request) {
         WorkflowColumn column = columnRepository.findById(request.getColumnId())
                 .orElseThrow(() -> new NotFoundException("Column " + request.getColumnId() + " not found"));
@@ -59,6 +61,7 @@ public class TaskService {
         }
     }
 
+    @Transactional
     public TaskResponse update(Long id, com.todoapp.backend.task.dto.UpdateTaskRequest request) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task " + id + " not found"));
@@ -89,6 +92,7 @@ public class TaskService {
                 .findFirst();
     }
 
+    @Transactional
     public TaskResponse move(Long id, Long targetColumnId, int targetPosition) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task " + id + " not found"));
@@ -128,6 +132,7 @@ public class TaskService {
         return new TaskResponse(task);
     }
 
+    @Transactional
     public void delete(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task " + id + " not found"));

@@ -21,9 +21,12 @@ import { TaskFormComponent } from '../task-form/task-form.component';
                       [columnId]="(editingTask?.columnId ?? activeColumnIdForNewTask)!"
                       [editingTask]="editingTask"
                       [existingTasks]="allTasks()" [serverConflict]="lastConflict" (save)="onTaskSaved($event)"
-                      (cancel)="onCancelForm()"></app-task-form>
+                      (cancel)="onCancelForm()" (deleteTask)="onDeleteTask($event)"></app-task-form>
     </div>
   `,
+  styles: [`
+    .board { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  `],
 })
 export class BoardComponent implements OnInit {
   board: Board | null = null;
@@ -104,6 +107,18 @@ export class BoardComponent implements OnInit {
         error: handleError,
       });
     }
+  }
+
+  onDeleteTask(taskId: number): void {
+    this.boardService.deleteTask(taskId).subscribe(() => {
+      if (this.board) {
+        for (const column of this.board.columns) {
+          column.tasks = column.tasks.filter((t) => t.id !== taskId);
+        }
+      }
+      this.editingTask = null;
+      this.activeColumnIdForNewTask = null;
+    });
   }
 
   onColumnDropEvent(event: CdkDragDrop<Task[]>): void {
