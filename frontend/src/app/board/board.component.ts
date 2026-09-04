@@ -20,7 +20,7 @@ import { TaskFormComponent } from '../task-form/task-form.component';
       <app-task-form *ngIf="activeColumnIdForNewTask !== null || editingTask !== null"
                       [columnId]="(editingTask?.columnId ?? activeColumnIdForNewTask)!"
                       [editingTask]="editingTask"
-                      [existingTasks]="allTasks()" (save)="onTaskSaved($event)"
+                      [existingTasks]="allTasks()" [serverConflict]="lastConflict" (save)="onTaskSaved($event)"
                       (cancel)="onCancelForm()"></app-task-form>
     </div>
   `,
@@ -29,6 +29,7 @@ export class BoardComponent implements OnInit {
   board: Board | null = null;
   activeColumnIdForNewTask: number | null = null;
   editingTask: Task | null = null;
+  lastConflict: { id: number; title: string; startTime: string; endTime: string } | null = null;
 
   constructor(private boardService: BoardService) {}
 
@@ -61,32 +62,46 @@ export class BoardComponent implements OnInit {
 
   onEditTask(task: Task): void {
     this.editingTask = task;
+    this.lastConflict = null;
   }
 
   onAddTaskClicked(columnId: number): void {
     this.activeColumnIdForNewTask = columnId;
     this.editingTask = null;
+    this.lastConflict = null;
   }
 
   onCancelForm(): void {
     this.activeColumnIdForNewTask = null;
     this.editingTask = null;
+    this.lastConflict = null;
   }
 
   onTaskSaved(event: { request: CreateTaskRequest | UpdateTaskRequest; taskId: number | null }): void {
+    const handleError = (err: any) => {
+      if (err.status === 409) {
+        this.lastConflict = err.error.conflictingTask;
+      }
+    };
     if (event.taskId === null) {
-      this.boardService.createTask(event.request as CreateTaskRequest).subscribe((task) => {
-        const column = this.board?.columns.find((c) => c.id === task.columnId);
-        column?.tasks.push(task);
-        this.activeColumnIdForNewTask = null;
-        this.editingTask = null;
+      this.boardService.createTask(event.request as CreateTaskRequest).subscribe({
+        next: (task) => {
+          const column = this.board?.columns.find((c) => c.id === task.columnId);
+          column?.tasks.push(task);
+          this.activeColumnIdForNewTask = null;
+          this.editingTask = null;
+        },
+        error: handleError,
       });
     } else {
-      this.boardService.updateTask(event.taskId, event.request as UpdateTaskRequest).subscribe((task) => {
-        const column = this.board?.columns.find((c) => c.id === task.columnId);
-        const index = column?.tasks.findIndex((t) => t.id === task.id) ?? -1;
-        if (column && index >= 0) column.tasks[index] = task;
-        this.editingTask = null;
+      this.boardService.updateTask(event.taskId, event.request as UpdateTaskRequest).subscribe({
+        next: (task) => {
+          const column = this.board?.columns.find((c) => c.id === task.columnId);
+          const index = column?.tasks.findIndex((t) => t.id === task.id) ?? -1;
+          if (column && index >= 0) column.tasks[index] = task;
+          this.editingTask = null;
+        },
+        error: handleError,
       });
     }
   }

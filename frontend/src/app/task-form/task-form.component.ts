@@ -41,7 +41,7 @@ export function findClientSideOverlap(
       <input [(ngModel)]="startTime" name="startTime" type="datetime-local" />
       <input [(ngModel)]="endTime" name="endTime" type="datetime-local" />
       <div class="error" *ngFor="let err of errors">{{ err }}</div>
-      <div class="conflict" *ngIf="conflict">Overlaps with "{{ conflict.title }}"</div>
+      <div class="conflict" *ngIf="conflict || serverConflict">Overlaps with "{{ (conflict || serverConflict)?.title }}"</div>
       <button type="submit">Save</button>
       <button type="button" (click)="cancel.emit()">Cancel</button>
     </form>
@@ -51,6 +51,7 @@ export class TaskFormComponent {
   @Input({ required: true }) columnId!: number;
   @Input() editingTask: Task | null = null;
   @Input() existingTasks: Task[] = [];
+  @Input() serverConflict: Task | { title: string } | null = null;
   @Output() save = new EventEmitter<{ request: CreateTaskRequest | UpdateTaskRequest; taskId: number | null }>();
   @Output() cancel = new EventEmitter<void>();
 
