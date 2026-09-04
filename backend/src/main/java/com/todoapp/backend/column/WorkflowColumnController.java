@@ -2,6 +2,7 @@ package com.todoapp.backend.column;
 
 import com.todoapp.backend.column.dto.ColumnResponse;
 import com.todoapp.backend.column.dto.CreateColumnRequest;
+import com.todoapp.backend.column.dto.UpdateColumnRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,5 +28,16 @@ public class WorkflowColumnController {
     @GetMapping
     public List<ColumnResponse> listAll() {
         return service.listAll();
+    }
+
+    @PatchMapping("/{id}")
+    public ColumnResponse update(@PathVariable Long id, @RequestBody UpdateColumnRequest request) {
+        return service.update(id, request.getName(), request.getPosition());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
