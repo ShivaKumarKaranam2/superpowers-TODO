@@ -71,6 +71,13 @@ export class TaskFormComponent {
       this.tagsText = this.editingTask.tags.join(', ');
       this.startTime = this.toDatetimeLocalValue(this.editingTask.startTime);
       this.endTime = this.toDatetimeLocalValue(this.editingTask.endTime);
+    } else {
+      this.title = '';
+      this.description = '';
+      this.priority = 'MEDIUM';
+      this.tagsText = '';
+      this.startTime = '';
+      this.endTime = '';
     }
   }
 

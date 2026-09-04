@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Task } from '../models/models';
 
@@ -7,7 +7,7 @@ import { Task } from '../models/models';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="task-card">
+    <div class="task-card" (click)="edit.emit(task)">
       <div class="task-title">{{ task.title }}</div>
       <span class="priority-badge" [class]="'priority-' + task.priority.toLowerCase()">{{ task.priority }}</span>
       <div class="tags">
@@ -21,4 +21,5 @@ import { Task } from '../models/models';
 })
 export class TaskCardComponent {
   @Input({ required: true }) task!: Task;
+  @Output() edit = new EventEmitter<Task>();
 }

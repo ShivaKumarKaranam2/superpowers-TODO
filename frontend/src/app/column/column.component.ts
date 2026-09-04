@@ -1,21 +1,24 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ColumnWithTasks } from '../models/models';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { ColumnWithTasks, Task } from '../models/models';
 import { TaskCardComponent } from '../task-card/task-card.component';
 
 @Component({
   selector: 'app-column',
   standalone: true,
-  imports: [CommonModule, FormsModule, TaskCardComponent],
+  imports: [CommonModule, FormsModule, DragDropModule, TaskCardComponent],
   template: `
     <div class="column">
-      <div *ngIf="!renaming" (dblclick)="startRenaming()">
-        <h3>{{ column.name }}</h3>
-      </div>
+      <div *ngIf="!renaming" (dblclick)="startRenaming()"><h3>{{ column.name }}</h3></div>
       <input *ngIf="renaming" [(ngModel)]="renameDraft" (blur)="confirmRename()" (keyup.enter)="confirmRename()" />
       <button type="button" (click)="requestDelete()">Delete column</button>
-      <app-task-card *ngFor="let task of column.tasks" [task]="task"></app-task-card>
+      <div cdkDropList [id]="'column-' + column.id" [cdkDropListData]="column.tasks"
+           (cdkDropListDropped)="drop.emit($event)" class="task-list">
+        <app-task-card *ngFor="let task of column.tasks" cdkDrag [cdkDragData]="task" [task]="task"
+                       (edit)="editTask.emit($event)"></app-task-card>
+      </div>
     </div>
   `,
 })
@@ -23,6 +26,8 @@ export class ColumnComponent {
   @Input({ required: true }) column!: ColumnWithTasks;
   @Output() rename = new EventEmitter<{ id: number; name: string }>();
   @Output() delete = new EventEmitter<number>();
+  @Output() drop = new EventEmitter<CdkDragDrop<Task[]>>();
+  @Output() editTask = new EventEmitter<Task>();
 
   renaming = false;
   renameDraft = '';
