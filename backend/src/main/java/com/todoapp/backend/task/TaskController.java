@@ -21,4 +21,10 @@ public class TaskController {
     public ResponseEntity<TaskResponse> create(@Valid @RequestBody CreateTaskRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
     }
+
+    @PatchMapping("/{id}")
+    public TaskResponse update(@PathVariable Long id,
+                                @jakarta.validation.Valid @RequestBody com.todoapp.backend.task.dto.UpdateTaskRequest request) {
+        return service.update(id, request);
+    }
 }

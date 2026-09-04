@@ -9,9 +9,12 @@ import java.util.List;
 public class WorkflowColumnService {
 
     private final WorkflowColumnRepository repository;
+    private final com.todoapp.backend.task.TaskRepository taskRepository;
 
-    public WorkflowColumnService(WorkflowColumnRepository repository) {
+    public WorkflowColumnService(WorkflowColumnRepository repository,
+                                  com.todoapp.backend.task.TaskRepository taskRepository) {
         this.repository = repository;
+        this.taskRepository = taskRepository;
     }
 
     public ColumnResponse create(String name) {
@@ -62,8 +65,7 @@ public class WorkflowColumnService {
         repository.delete(column);
     }
 
-    // Always false until Task 6 rewires this to query TaskRepository once Task entity exists.
     private boolean hasAnyTasks(Long columnId) {
-        return false;
+        return taskRepository.countByColumnId(columnId) > 0;
     }
 }

@@ -58,6 +58,25 @@ public class TaskService {
         }
     }
 
+    public TaskResponse update(Long id, com.todoapp.backend.task.dto.UpdateTaskRequest request) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Task " + id + " not found"));
+
+        validateSchedulePairing(request.getStartTime(), request.getEndTime());
+        findOverlapping(request.getStartTime(), request.getEndTime(), task.getId())
+                .ifPresent(conflict -> { throw new com.todoapp.backend.common.exception.OverlapException(conflict); });
+
+        task.setTitle(request.getTitle());
+        task.setDescription(request.getDescription());
+        task.setPriority(request.getPriority() != null ? request.getPriority() : task.getPriority());
+        task.setTags(request.getTags() != null ? new HashSet<>(request.getTags()) : task.getTags());
+        task.setStartTime(request.getStartTime());
+        task.setEndTime(request.getEndTime());
+        task.touchUpdatedAt();
+
+        return new TaskResponse(taskRepository.save(task));
+    }
+
     Optional<Task> findOverlapping(Instant startTime, Instant endTime, Long excludeTaskId) {
         if (startTime == null || endTime == null) {
             return Optional.empty();
