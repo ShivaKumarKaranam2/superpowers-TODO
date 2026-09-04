@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class TaskService {
@@ -28,6 +29,8 @@ public class TaskService {
                 .orElseThrow(() -> new NotFoundException("Column " + request.getColumnId() + " not found"));
 
         validateSchedulePairing(request.getStartTime(), request.getEndTime());
+        findOverlapping(request.getStartTime(), request.getEndTime(), null)
+                .ifPresent(conflict -> { throw new com.todoapp.backend.common.exception.OverlapException(conflict); });
 
         int nextPosition = (int) taskRepository.countByColumnId(column.getId());
         Task task = new Task(column, nextPosition, request.getTitle());
@@ -53,5 +56,16 @@ public class TaskService {
             throw new ValidationException("endTime must be after startTime",
                     Map.of("endTime", "must be strictly after startTime"));
         }
+    }
+
+    Optional<Task> findOverlapping(Instant startTime, Instant endTime, Long excludeTaskId) {
+        if (startTime == null || endTime == null) {
+            return Optional.empty();
+        }
+        return taskRepository.findByStartTimeIsNotNullAndEndTimeIsNotNull().stream()
+                .filter(existing -> !existing.getId().equals(excludeTaskId))
+                .filter(existing -> existing.getStartTime().isBefore(endTime)
+                        && startTime.isBefore(existing.getEndTime()))
+                .findFirst();
     }
 }

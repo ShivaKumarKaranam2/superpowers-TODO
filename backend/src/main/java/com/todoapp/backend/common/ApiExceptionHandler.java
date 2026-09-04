@@ -22,4 +22,12 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(ex.getMessage(), ex.getFields()));
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(com.todoapp.backend.common.exception.OverlapException.class)
+    public ResponseEntity<com.todoapp.backend.common.dto.OverlapErrorResponse> handleOverlap(
+            com.todoapp.backend.common.exception.OverlapException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                new com.todoapp.backend.common.dto.OverlapErrorResponse(
+                        new com.todoapp.backend.common.dto.ConflictingTaskDto(ex.getConflictingTask())));
+    }
 }
