@@ -75,14 +75,13 @@ export function findClientSideOverlap(
       color: var(--color-text);
       font-family: inherit;
     }
-    .time-row { display: flex; gap: 8px; }
-    .time-row .field-label { flex: 1; }
+    .time-row { display: flex; flex-direction: column; gap: 8px; }
     .error { color: var(--color-danger); font-size: 0.85em; }
     .conflict { background: var(--priority-high-bg); color: var(--priority-high-text); padding: 6px 10px; border-radius: 4px; }
     .form-actions { display: flex; gap: 8px; }
     .primary-button {
       background: var(--color-accent);
-      color: white;
+      color: var(--color-on-accent);
       border: none;
       border-radius: 6px;
       padding: 8px 16px;
