@@ -6,26 +6,65 @@ import { Board, CreateTaskRequest, Task, UpdateTaskRequest } from '../models/mod
 import { ColumnComponent } from '../column/column.component';
 import { TaskFormComponent } from '../task-form/task-form.component';
 
+const COLUMN_ACCENT_PALETTE = [
+  'var(--column-accent-1)',
+  'var(--column-accent-2)',
+  'var(--column-accent-3)',
+  'var(--column-accent-4)',
+];
+
+export function columnAccentColor(index: number): string {
+  return COLUMN_ACCENT_PALETTE[index % COLUMN_ACCENT_PALETTE.length];
+}
+
 @Component({
   selector: 'app-board',
   standalone: true,
   imports: [CommonModule, DragDropModule, ColumnComponent, TaskFormComponent],
   template: `
-    <div class="board" cdkDropListGroup>
-      <app-column *ngFor="let column of board?.columns" [column]="column"
-                   (rename)="onRenameColumn($event)" (delete)="onDeleteColumn($event)"
-                   (drop)="onColumnDropEvent($event)" (editTask)="onEditTask($event)"
-                   (addTask)="onAddTaskClicked($event)"></app-column>
-      <input #newColumnName placeholder="New column name" (keyup.enter)="addColumn(newColumnName.value); newColumnName.value = ''" />
-      <app-task-form *ngIf="activeColumnIdForNewTask !== null || editingTask !== null"
-                      [columnId]="(editingTask?.columnId ?? activeColumnIdForNewTask)!"
-                      [editingTask]="editingTask"
-                      [existingTasks]="allTasks()" [serverConflict]="lastConflict" (save)="onTaskSaved($event)"
-                      (cancel)="onCancelForm()" (deleteTask)="onDeleteTask($event)"></app-task-form>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <app-task-form *ngIf="activeColumnIdForNewTask !== null || editingTask !== null"
+                        [columnId]="(editingTask?.columnId ?? activeColumnIdForNewTask)!"
+                        [editingTask]="editingTask"
+                        [existingTasks]="allTasks()" [serverConflict]="lastConflict" (save)="onTaskSaved($event)"
+                        (cancel)="onCancelForm()" (deleteTask)="onDeleteTask($event)"></app-task-form>
+        <p class="sidebar-placeholder" *ngIf="activeColumnIdForNewTask === null && editingTask === null">
+          Select a column and click "+ Add task", or click "Edit" on a task, to get started.
+        </p>
+      </aside>
+      <div class="board" cdkDropListGroup>
+        <app-column *ngFor="let column of board?.columns; let i = index" [column]="column"
+                     [accentColor]="columnAccentColor(i)"
+                     (rename)="onRenameColumn($event)" (delete)="onDeleteColumn($event)"
+                     (drop)="onColumnDropEvent($event)" (editTask)="onEditTask($event)"
+                     (addTask)="onAddTaskClicked($event)"></app-column>
+        <input #newColumnName class="new-column-input" placeholder="New column name"
+               (keyup.enter)="addColumn(newColumnName.value); newColumnName.value = ''" />
+      </div>
     </div>
   `,
   styles: [`
-    .board { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+    .app-shell { display: flex; gap: 24px; padding: 24px; align-items: flex-start; }
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+    .sidebar-placeholder { color: var(--color-text-muted); font-size: 0.9em; margin: 0; }
+    .board { display: flex; gap: 16px; align-items: flex-start; overflow-x: auto; }
+    .new-column-input {
+      background: var(--color-surface);
+      border: 1px dashed var(--color-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-width: 200px;
+      color: var(--color-text);
+    }
   `],
 })
 export class BoardComponent implements OnInit {
@@ -33,6 +72,7 @@ export class BoardComponent implements OnInit {
   activeColumnIdForNewTask: number | null = null;
   editingTask: Task | null = null;
   lastConflict: { id: number; title: string; startTime: string; endTime: string } | null = null;
+  readonly columnAccentColor = columnAccentColor;
 
   constructor(private boardService: BoardService) {}
 

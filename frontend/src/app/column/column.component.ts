@@ -29,6 +29,7 @@ import { TaskCardComponent } from '../task-card/task-card.component';
 })
 export class ColumnComponent {
   @Input({ required: true }) column!: ColumnWithTasks;
+  @Input() accentColor = 'var(--column-accent-1)';
   @Output() rename = new EventEmitter<{ id: number; name: string }>();
   @Output() delete = new EventEmitter<number>();
   @Output() drop = new EventEmitter<CdkDragDrop<Task[]>>();

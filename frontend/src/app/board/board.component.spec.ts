@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
-import { BoardComponent } from './board.component';
+import { BoardComponent, columnAccentColor } from './board.component';
 import { BoardService } from '../services/board.service';
 import { Board } from '../models/models';
 import { ColumnComponent } from '../column/column.component';
@@ -36,6 +36,18 @@ describe('BoardComponent', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Backlog');
     expect(text).toContain('Write spec');
+  });
+
+  it('shows a placeholder message in the sidebar when no task is being created or edited', () => {
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Select a column');
+  });
+
+  it('hides the sidebar placeholder once a task form is open', () => {
+    fixture.componentInstance.onAddTaskClicked(1);
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).not.toContain('Select a column');
   });
 });
 
@@ -256,5 +268,19 @@ describe('BoardComponent edit wiring', () => {
     expect(columnDebugEl).not.toBeNull();
     (columnDebugEl!.componentInstance as ColumnComponent).addTask.emit(1);
     expect(fixture.componentInstance.activeColumnIdForNewTask).toBe(1);
+  });
+});
+
+describe('columnAccentColor', () => {
+  it('cycles through the accent palette by index', () => {
+    expect(columnAccentColor(0)).toBe('var(--column-accent-1)');
+    expect(columnAccentColor(1)).toBe('var(--column-accent-2)');
+    expect(columnAccentColor(2)).toBe('var(--column-accent-3)');
+    expect(columnAccentColor(3)).toBe('var(--column-accent-4)');
+  });
+
+  it('wraps back to the first color once the palette is exhausted', () => {
+    expect(columnAccentColor(4)).toBe('var(--column-accent-1)');
+    expect(columnAccentColor(5)).toBe('var(--column-accent-2)');
   });
 });
