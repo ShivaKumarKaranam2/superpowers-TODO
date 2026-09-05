@@ -62,4 +62,25 @@ class TaskCreateTest {
                                 + ",\"title\":\"Half scheduled\",\"startTime\":\"2026-09-05T09:00:00Z\"}"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void rejectsMissingColumnId() throws Exception {
+        mockMvc.perform(post("/api/tasks")
+                        .contentType("application/json")
+                        .content("{\"title\":\"Orphan\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void duplicateTagsAreDeduplicated() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+
+        mockMvc.perform(post("/api/tasks")
+                        .contentType("application/json")
+                        .content("{\"columnId\":" + column.getId()
+                                + ",\"title\":\"Tagged\",\"tags\":[\"urgent\",\"urgent\",\"home\"]}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tags", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(jsonPath("$.tags", org.hamcrest.Matchers.containsInAnyOrder("urgent", "home")));
+    }
 }

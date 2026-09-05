@@ -73,4 +73,47 @@ class TaskMoveTest {
                         .content("{\"targetColumnId\":9999,\"targetPosition\":0}"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void clampsNegativeTargetPositionToZero() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        Task first = taskRepository.save(new Task(column, 0, "First"));
+        Task second = taskRepository.save(new Task(column, 1, "Second"));
+
+        mockMvc.perform(post("/api/tasks/{id}/move", second.getId())
+                        .contentType("application/json")
+                        .content("{\"targetColumnId\":" + column.getId() + ",\"targetPosition\":-5}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.position").value(0));
+
+        var ordered = taskRepository.findByColumnIdOrderByPositionAsc(column.getId());
+        assertThat(ordered).extracting(Task::getTitle).containsExactly("Second", "First");
+    }
+
+    @Test
+    void rejectsMoveMissingTargetColumnId() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        Task task = taskRepository.save(new Task(column, 0, "First"));
+
+        mockMvc.perform(post("/api/tasks/{id}/move", task.getId())
+                        .contentType("application/json")
+                        .content("{\"targetPosition\":0}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void clampsTargetPositionBeyondSizeToMax() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        Task first = taskRepository.save(new Task(column, 0, "First"));
+        Task second = taskRepository.save(new Task(column, 1, "Second"));
+
+        mockMvc.perform(post("/api/tasks/{id}/move", first.getId())
+                        .contentType("application/json")
+                        .content("{\"targetColumnId\":" + column.getId() + ",\"targetPosition\":999}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.position").value(1));
+
+        var ordered = taskRepository.findByColumnIdOrderByPositionAsc(column.getId());
+        assertThat(ordered).extracting(Task::getTitle).containsExactly("Second", "First");
+    }
 }

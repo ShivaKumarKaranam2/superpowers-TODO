@@ -76,6 +76,58 @@ class TaskOverlapTest {
     }
 
     @Test
+    void rejectsReverseContainment() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        mockMvc.perform(post("/api/tasks").contentType("application/json")
+                        .content(taskJson(column.getId(), "Small", "2026-09-05T10:00:00Z", "2026-09-05T11:00:00Z")))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/tasks").contentType("application/json")
+                        .content(taskJson(column.getId(), "Larger", "2026-09-05T09:00:00Z", "2026-09-05T12:00:00Z")))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void allowsNonOverlappingSeparateTimes() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        mockMvc.perform(post("/api/tasks").contentType("application/json")
+                        .content(taskJson(column.getId(), "Morning", "2026-09-05T09:00:00Z", "2026-09-05T10:00:00Z")))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/tasks").contentType("application/json")
+                        .content(taskJson(column.getId(), "Afternoon", "2026-09-05T14:00:00Z", "2026-09-05T15:00:00Z")))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void allowsNewTaskEndingExactlyWhenExistingStarts() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        mockMvc.perform(post("/api/tasks").contentType("application/json")
+                        .content(taskJson(column.getId(), "Second", "2026-09-05T10:00:00Z", "2026-09-05T11:00:00Z")))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/tasks").contentType("application/json")
+                        .content(taskJson(column.getId(), "First", "2026-09-05T09:00:00Z", "2026-09-05T10:00:00Z")))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void rejectsEndTimeEqualToStartTime() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        mockMvc.perform(post("/api/tasks").contentType("application/json")
+                        .content(taskJson(column.getId(), "ZeroLength", "2026-09-05T09:00:00Z", "2026-09-05T09:00:00Z")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rejectsEndTimeBeforeStartTime() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        mockMvc.perform(post("/api/tasks").contentType("application/json")
+                        .content(taskJson(column.getId(), "Backwards", "2026-09-05T10:00:00Z", "2026-09-05T09:00:00Z")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void ignoresTasksWithoutASchedule() throws Exception {
         WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
         mockMvc.perform(post("/api/tasks").contentType("application/json")

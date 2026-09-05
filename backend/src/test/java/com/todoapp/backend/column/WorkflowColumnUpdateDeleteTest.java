@@ -62,4 +62,36 @@ class WorkflowColumnUpdateDeleteTest {
         mockMvc.perform(delete("/api/columns/{id}", column.getId()))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void returns404WhenDeletingMissingColumn() throws Exception {
+        mockMvc.perform(delete("/api/columns/{id}", 9999L))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void reorderClampsNegativePositionToZero() throws Exception {
+        WorkflowColumn a = repository.save(new WorkflowColumn("A", 0));
+        repository.save(new WorkflowColumn("B", 1));
+        repository.save(new WorkflowColumn("C", 2));
+
+        mockMvc.perform(patch("/api/columns/{id}", a.getId())
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(Map.of("position", -5))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.position").value(0));
+    }
+
+    @Test
+    void reorderClampsPositionBeyondSizeToMax() throws Exception {
+        WorkflowColumn a = repository.save(new WorkflowColumn("A", 0));
+        repository.save(new WorkflowColumn("B", 1));
+        repository.save(new WorkflowColumn("C", 2));
+
+        mockMvc.perform(patch("/api/columns/{id}", a.getId())
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(Map.of("position", 999))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.position").value(2));
+    }
 }

@@ -81,4 +81,15 @@ class TaskUpdateTest {
                         .content("{\"title\":\"Title\",\"tags\":[]}"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void rejectsUpdateMissingTags() throws Exception {
+        WorkflowColumn column = columnRepository.save(new WorkflowColumn("Backlog", 0));
+        Task task = taskRepository.save(new Task(column, 0, "Title"));
+
+        mockMvc.perform(patch("/api/tasks/{id}", task.getId())
+                        .contentType("application/json")
+                        .content("{\"title\":\"Title\",\"priority\":\"MEDIUM\"}"))
+                .andExpect(status().isBadRequest());
+    }
 }
