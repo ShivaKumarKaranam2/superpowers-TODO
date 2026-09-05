@@ -11,10 +11,19 @@ import { TaskCardComponent } from '../task-card/task-card.component';
   imports: [CommonModule, FormsModule, DragDropModule, TaskCardComponent],
   template: `
     <div class="column">
-      <div *ngIf="!renaming" (dblclick)="startRenaming()"><h3>{{ column.name }}</h3></div>
-      <input *ngIf="renaming" [(ngModel)]="renameDraft" (blur)="confirmRename()" (keyup.enter)="confirmRename()" />
-      <button type="button" (click)="requestDelete()">Delete column</button>
-      <button type="button" (click)="addTask.emit(column.id)">+ Add task</button>
+      <div class="column-header">
+        <span class="column-dot" [style.background]="accentColor"></span>
+        <div *ngIf="!renaming" class="column-title" (dblclick)="startRenaming()">
+          <h3>{{ column.name }}</h3>
+        </div>
+        <input *ngIf="renaming" class="column-rename-input" [(ngModel)]="renameDraft"
+               (blur)="confirmRename()" (keyup.enter)="confirmRename()" />
+        <span class="column-count">{{ column.tasks.length }}</span>
+      </div>
+      <div class="column-actions">
+        <button type="button" class="text-button" (click)="requestDelete()">Delete column</button>
+        <button type="button" class="text-button" (click)="addTask.emit(column.id)">+ Add task</button>
+      </div>
       <div cdkDropList [id]="'column-' + column.id" [cdkDropListData]="column.tasks"
            (cdkDropListDropped)="drop.emit($event)" class="task-list">
         <app-task-card *ngFor="let task of column.tasks" cdkDrag [cdkDragData]="task" [task]="task"
@@ -23,7 +32,29 @@ import { TaskCardComponent } from '../task-card/task-card.component';
     </div>
   `,
   styles: [`
-    .column { min-width: 260px; max-width: 260px; background: #f4f5f7; padding: 12px; border-radius: 8px; }
+    .column {
+      min-width: 260px;
+      max-width: 260px;
+      background: var(--color-surface-alt);
+      border: 1px solid var(--color-border);
+      padding: 12px;
+      border-radius: 10px;
+    }
+    .column-header { display: flex; align-items: center; gap: 8px; }
+    .column-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .column-title { flex: 1; }
+    .column-title h3 { margin: 0; font-size: 1em; color: var(--color-text); }
+    .column-count { color: var(--color-text-muted); font-size: 0.85em; }
+    .column-rename-input { flex: 1; }
+    .column-actions { display: flex; gap: 8px; margin: 8px 0; }
+    .text-button {
+      background: none;
+      border: none;
+      color: var(--color-accent);
+      font-size: 0.8em;
+      cursor: pointer;
+      padding: 0;
+    }
     .task-list { min-height: 40px; }
   `],
 })

@@ -66,4 +66,18 @@ describe('ColumnComponent', () => {
     expect(emitted.length).toBe(1);
     expect(emitted[0].id).toBe(10);
   });
+
+  it('renders the accent color as the dot\'s background and shows the task count', () => {
+    fixture.componentInstance.column = columnWithTask;
+    fixture.componentInstance.accentColor = 'var(--column-accent-2)';
+    fixture.detectChanges();
+
+    const dot: HTMLElement = fixture.nativeElement.querySelector('.column-dot');
+    expect(dot).not.toBeNull();
+    expect(dot.style.background).toContain('var(--column-accent-2)');
+
+    const count: HTMLElement = fixture.nativeElement.querySelector('.column-count');
+    expect(count).not.toBeNull();
+    expect(count.textContent?.trim()).toBe('1');
+  });
 });
