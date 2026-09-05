@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { BoardComponent } from './board.component';
 import { BoardService } from '../services/board.service';
 import { Board } from '../models/models';
@@ -101,18 +101,20 @@ describe('BoardComponent task creation', () => {
 describe('BoardComponent drag-and-drop', () => {
   let fixture: ComponentFixture<BoardComponent>;
   let moveTaskSpy: jasmine.Spy;
-  const taskA = {
-    id: 1, columnId: 1, position: 0, title: 'A', description: null,
-    priority: 'MEDIUM' as const, tags: [], startTime: null, endTime: null, createdAt: '', updatedAt: '',
-  };
-  const seededBoard: Board = {
-    columns: [
-      { id: 1, name: 'Backlog', position: 0, createdAt: '', tasks: [taskA] },
-      { id: 2, name: 'Done', position: 1, createdAt: '', tasks: [] },
-    ],
-  };
 
   beforeEach(async () => {
+    // Fresh objects each test: onTaskDropped mutates board/task state in place
+    // (splice), so a shared const fixture would leak mutations across tests.
+    const taskA = {
+      id: 1, columnId: 1, position: 0, title: 'A', description: null,
+      priority: 'MEDIUM' as const, tags: [], startTime: null, endTime: null, createdAt: '', updatedAt: '',
+    };
+    const seededBoard: Board = {
+      columns: [
+        { id: 1, name: 'Backlog', position: 0, createdAt: '', tasks: [taskA] },
+        { id: 2, name: 'Done', position: 1, createdAt: '', tasks: [] },
+      ],
+    };
     moveTaskSpy = jasmine.createSpy('moveTask').and.returnValue(of(taskA));
     const boardServiceStub = { getBoard: () => of(seededBoard), moveTask: moveTaskSpy };
     await TestBed.configureTestingModule({
@@ -130,26 +132,89 @@ describe('BoardComponent drag-and-drop', () => {
     expect(fixture.componentInstance.board?.columns[1].tasks.length).toBe(1);
     expect(moveTaskSpy).toHaveBeenCalledWith(1, { targetColumnId: 2, targetPosition: 0 });
   });
+
+  it('does nothing when the dropped task id is not found in the source column', () => {
+    fixture.componentInstance.onTaskDropped(999, 1, 2, 0);
+
+    expect(fixture.componentInstance.board?.columns[0].tasks.length).toBe(1);
+    expect(fixture.componentInstance.board?.columns[1].tasks.length).toBe(0);
+    expect(moveTaskSpy).not.toHaveBeenCalled();
+  });
 });
 
-describe('BoardComponent edit wiring', () => {
+describe('BoardComponent drag-and-drop rollback on API failure', () => {
   let fixture: ComponentFixture<BoardComponent>;
   const taskA = {
     id: 1, columnId: 1, position: 0, title: 'A', description: null,
     priority: 'MEDIUM' as const, tags: [], startTime: null, endTime: null, createdAt: '', updatedAt: '',
   };
   const seededBoard: Board = {
-    columns: [{ id: 1, name: 'Backlog', position: 0, createdAt: '', tasks: [taskA] }],
+    columns: [
+      { id: 1, name: 'Backlog', position: 0, createdAt: '', tasks: [taskA] },
+      { id: 2, name: 'Done', position: 1, createdAt: '', tasks: [] },
+    ],
   };
 
   beforeEach(async () => {
-    const boardServiceStub = { getBoard: () => of(seededBoard) };
+    const boardServiceStub = {
+      getBoard: () => of(seededBoard),
+      moveTask: () => throwError(() => new Error('network error')),
+    };
     await TestBed.configureTestingModule({
       imports: [BoardComponent],
       providers: [{ provide: BoardService, useValue: boardServiceStub }],
     }).compileComponents();
     fixture = TestBed.createComponent(BoardComponent);
     fixture.detectChanges();
+  });
+
+  it('reverts the task back to its source column when the move API call fails', () => {
+    fixture.componentInstance.onTaskDropped(1, 1, 2, 0);
+
+    expect(fixture.componentInstance.board?.columns[0].tasks.length).toBe(1);
+    expect(fixture.componentInstance.board?.columns[0].tasks[0].id).toBe(1);
+    expect(fixture.componentInstance.board?.columns[0].tasks[0].columnId).toBe(1);
+    expect(fixture.componentInstance.board?.columns[1].tasks.length).toBe(0);
+  });
+});
+
+describe('BoardComponent edit wiring', () => {
+  let fixture: ComponentFixture<BoardComponent>;
+  // Fresh per test: onDeleteTask reassigns column.tasks in place on the shared
+  // seededBoard object, so a module-level const fixture would leak between tests.
+  let taskA: ReturnType<typeof makeTaskA>;
+  let seededBoard: Board;
+  let deleteTaskSpy: jasmine.Spy;
+
+  function makeTaskA() {
+    return {
+      id: 1, columnId: 1, position: 0, title: 'A', description: null,
+      priority: 'MEDIUM' as const, tags: [], startTime: null, endTime: null, createdAt: '', updatedAt: '',
+    };
+  }
+
+  beforeEach(async () => {
+    taskA = makeTaskA();
+    seededBoard = { columns: [{ id: 1, name: 'Backlog', position: 0, createdAt: '', tasks: [taskA] }] };
+    deleteTaskSpy = jasmine.createSpy('deleteTask').and.returnValue(of(undefined));
+    const boardServiceStub = { getBoard: () => of(seededBoard), deleteTask: deleteTaskSpy };
+    await TestBed.configureTestingModule({
+      imports: [BoardComponent],
+      providers: [{ provide: BoardService, useValue: boardServiceStub }],
+    }).compileComponents();
+    fixture = TestBed.createComponent(BoardComponent);
+    fixture.detectChanges();
+  });
+
+  it('deletes a task, removes it from its column, and clears the form state', () => {
+    fixture.componentInstance.editingTask = taskA;
+
+    fixture.componentInstance.onDeleteTask(1);
+
+    expect(deleteTaskSpy).toHaveBeenCalledWith(1);
+    expect(fixture.componentInstance.board?.columns[0].tasks.length).toBe(0);
+    expect(fixture.componentInstance.editingTask).toBeNull();
+    expect(fixture.componentInstance.activeColumnIdForNewTask).toBeNull();
   });
 
   it('sets editingTask when a column emits editTask, and clears it on cancel', () => {
@@ -168,7 +233,7 @@ describe('BoardComponent edit wiring', () => {
     expect(fixture.nativeElement.querySelector('app-task-form')).toBeNull();
   });
 
-  it('emits editTask from ColumnComponent up through the task card edit click', () => {
+  it('wires ColumnComponent\'s editTask output to onEditTask (component-level emission, not a real click)', () => {
     fixture.detectChanges();
     const columnDebugEl = fixture.debugElement.query(By.directive(ColumnComponent));
     expect(columnDebugEl).not.toBeNull();

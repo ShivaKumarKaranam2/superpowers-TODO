@@ -5,6 +5,13 @@ import { ColumnWithTasks } from '../models/models';
 describe('ColumnComponent', () => {
   let fixture: ComponentFixture<ColumnComponent>;
   const column: ColumnWithTasks = { id: 1, name: 'Backlog', position: 0, createdAt: '', tasks: [] };
+  const columnWithTask: ColumnWithTasks = {
+    id: 1, name: 'Backlog', position: 0, createdAt: '',
+    tasks: [{
+      id: 10, columnId: 1, position: 0, title: 'Write spec', description: null,
+      priority: 'HIGH', tags: [], startTime: null, endTime: null, createdAt: '', updatedAt: '',
+    }],
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [ColumnComponent] }).compileComponents();
@@ -43,5 +50,20 @@ describe('ColumnComponent', () => {
     addTaskButton!.click();
 
     expect(emitted).toEqual([1]);
+  });
+
+  it('forwards a task card\'s edit click to editTask, end-to-end through the real DOM', () => {
+    fixture.componentInstance.column = columnWithTask;
+    fixture.detectChanges();
+
+    const emitted: any[] = [];
+    fixture.componentInstance.editTask.subscribe((task: any) => emitted.push(task));
+
+    const editButton: HTMLButtonElement = fixture.nativeElement.querySelector('.edit-btn');
+    expect(editButton).not.toBeNull();
+    editButton.click();
+
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].id).toBe(10);
   });
 });
