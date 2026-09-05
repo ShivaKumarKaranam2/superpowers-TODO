@@ -112,6 +112,31 @@ describe('TaskFormComponent', () => {
     expect(fixture.componentInstance.conflict?.id).toBe(5);
   });
 
+  it('excludes the task being edited from its own overlap check when resubmitting its unchanged schedule', () => {
+    const scheduleStart = '2026-09-05T09:30:00';
+    const scheduleEnd = '2026-09-05T10:30:00';
+    const startUtc = new Date(scheduleStart).toISOString();
+    const endUtc = new Date(scheduleEnd).toISOString();
+    const editing: Task = {
+      id: 5, columnId: 1, position: 0, title: 'Standup', description: null,
+      priority: 'MEDIUM', tags: [], startTime: startUtc, endTime: endUtc,
+      createdAt: '', updatedAt: '',
+    };
+
+    const emitted: any[] = [];
+    fixture.componentInstance.save.subscribe((e: any) => emitted.push(e));
+    fixture.componentInstance.existingTasks = [editing];
+    fixture.componentInstance.editingTask = editing;
+    fixture.componentInstance.ngOnChanges({ editingTask: new SimpleChange(null, editing, false) });
+    fixture.componentInstance.title = 'Standup';
+
+    fixture.componentInstance.submit();
+
+    expect(fixture.componentInstance.conflict).toBeNull();
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].taskId).toBe(5);
+  });
+
   it('does not emit deleteTask when there is no editingTask', () => {
     const emitted: number[] = [];
     fixture.componentInstance.deleteTask.subscribe((id: number) => emitted.push(id));
