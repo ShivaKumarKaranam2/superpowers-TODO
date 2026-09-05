@@ -28,28 +28,69 @@ export function findClientSideOverlap(
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <form (ngSubmit)="submit()">
-      <input [(ngModel)]="title" name="title" placeholder="Title" />
-      <textarea [(ngModel)]="description" name="description" placeholder="Description"></textarea>
-      <select [(ngModel)]="priority" name="priority">
-        <option value="LOW">Low</option>
-        <option value="MEDIUM">Medium</option>
-        <option value="HIGH">High</option>
-        <option value="URGENT">Urgent</option>
-      </select>
-      <input [(ngModel)]="tagsText" name="tags" placeholder="Tags (comma-separated)" />
-      <input [(ngModel)]="startTime" name="startTime" type="datetime-local" />
-      <input [(ngModel)]="endTime" name="endTime" type="datetime-local" />
+    <form class="task-form" (ngSubmit)="submit()">
+      <label class="field-label">Title
+        <input class="field-input" [(ngModel)]="title" name="title" placeholder="What needs doing?" />
+      </label>
+      <label class="field-label">Description
+        <textarea class="field-input" [(ngModel)]="description" name="description" placeholder="Details"></textarea>
+      </label>
+      <label class="field-label">Priority
+        <select class="field-input" [(ngModel)]="priority" name="priority">
+          <option value="LOW">Low</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="HIGH">High</option>
+          <option value="URGENT">Urgent</option>
+        </select>
+      </label>
+      <label class="field-label">Tags
+        <input class="field-input" [(ngModel)]="tagsText" name="tags" placeholder="Tags (comma-separated)" />
+      </label>
+      <div class="time-row">
+        <label class="field-label">Starts
+          <input class="field-input" [(ngModel)]="startTime" name="startTime" type="datetime-local" />
+        </label>
+        <label class="field-label">Ends
+          <input class="field-input" [(ngModel)]="endTime" name="endTime" type="datetime-local" />
+        </label>
+      </div>
       <div class="error" *ngFor="let err of errors">{{ err }}</div>
       <div class="conflict" *ngIf="conflict || serverConflict">Overlaps with "{{ (conflict || serverConflict)?.title }}"</div>
-      <button type="submit">Save</button>
-      <button type="button" (click)="cancel.emit()">Cancel</button>
-      <button type="button" *ngIf="editingTask" (click)="requestDelete()">Delete task</button>
+      <div class="form-actions">
+        <button type="submit" class="primary-button">Save</button>
+        <button type="button" class="text-button" (click)="cancel.emit()">Cancel</button>
+      </div>
+      <button type="button" class="danger-button" *ngIf="editingTask" (click)="requestDelete()">Delete task</button>
     </form>
   `,
   styles: [`
-    .error { color: #c0392b; font-size: 0.85em; }
-    .conflict { background: #fdecea; color: #c0392b; padding: 6px 10px; border-radius: 4px; margin-top: 4px; }
+    .task-form { display: flex; flex-direction: column; gap: 12px; }
+    .field-label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8em; color: var(--color-text-muted); }
+    .field-input {
+      font-size: 0.95em;
+      padding: 8px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-family: inherit;
+    }
+    .time-row { display: flex; gap: 8px; }
+    .time-row .field-label { flex: 1; }
+    .error { color: var(--color-danger); font-size: 0.85em; }
+    .conflict { background: var(--priority-high-bg); color: var(--priority-high-text); padding: 6px 10px; border-radius: 4px; }
+    .form-actions { display: flex; gap: 8px; }
+    .primary-button {
+      background: var(--color-accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .text-button { background: none; border: 1px solid var(--color-border); border-radius: 6px; padding: 8px 16px; cursor: pointer; color: var(--color-text); }
+    .danger-button { background: none; border: 1px solid var(--color-danger); color: var(--color-danger); border-radius: 6px; padding: 6px 12px; cursor: pointer; align-self: flex-start; }
   `],
 })
 export class TaskFormComponent {
